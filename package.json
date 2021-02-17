@@ -1,0 +1,17 @@
+{
+  "name": "jobit-server-side",
+  "version": "1.0.0",
+  "description": "Server side application built with nodejs and express",
+  "main": "index.js",
+  "scripts": {
+    
+  },
+  "author": "Islam Abdelkarim",
+  "license": "ISC",
+  "dependencies": {
+    "config": "^3.3.3",
+    "express": "^4.17.1",
+    "joi": "^17.4.0",
+    "mysql": "^2.18.1"
+  }
+}

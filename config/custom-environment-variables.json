@@ -1,0 +1,4 @@
+{
+    "jwtPrivateKey": "jobit_secretKey",
+    "dbPassword": "DB_PASSWORD"
+}
