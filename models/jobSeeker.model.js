@@ -3,6 +3,10 @@ const connection = require("../db");
 class JobSeeker {
     constructor() {}
 
+    getSeeker(email) {
+        
+    }
+
     createSeeker(seeker, next) {
         this.gender = seeker.gender;
         this.birth_date = seeker.birth_date;

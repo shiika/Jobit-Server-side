@@ -3,6 +3,10 @@ const Joi = require('joi');
 const router = express.Router();
 const JobSeeker = require("../models/jobSeeker.model");
 
+router.get("/", (req, res) => {
+    res.send("Seeker accessed!");
+})
+
 router.post("/signUp", (req, res, next) => {
     const { error } = validateUser(req.body);
     if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);
