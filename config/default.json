@@ -2,9 +2,9 @@
     "jwtPrivateKey": "",
     "dbPassword": "",
     "db": {
-        "host": "127.0.0.1",
-        "port": "3306",
-        "user": "root",
-        "database": "mydb"
+        "host": "mysql-20754-0.cloudclusters.net",
+        "port": "20754",
+        "user": "islam",
+        "database": "Recruitment"
     }
 }
