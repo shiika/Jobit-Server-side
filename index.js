@@ -7,6 +7,7 @@ const jobSeeker = require("./routes/jobSeeker");
 
 if (!config.get("jwtPrivateKey")) {
     console.log("FATAL ERROR: jwtPrivateKey is not defined");
+    process.exit(1);
 }
 
 app.use(json);
