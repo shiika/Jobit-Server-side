@@ -1,40 +1,58 @@
 const express = require('express');
-const Joi = require('joi');
 const router = express.Router();
+const validateUser = require("../models/validators/user");
+const validateInterests = require("../models/validators/interests");
+const validateProf = require("../models/validators/prof-info");
 const JobSeeker = require("../models/jobSeeker.model");
 
 router.get("/", (req, res) => {
     res.send("Seeker accessed!");
-})
+});
 
-router.post("/signUp", (req, res, next) => {
+router.get("/titles", (req, res, next) => {
+    JobSeeker.getTitles((error, results) => {
+        if (error) return next(error);
+        res.send(results)
+    })
+});
+
+router.post("/auth/register", (req, res, next) => {
     const { error } = validateUser(req.body);
     if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);
 
-    const newSeeker = new JobSeeker();
+    let {phone, ...newSeeker} = req.body;
+    const birth_date = new Date(newSeeker.birth_date);
 
-    newSeeker.createSeeker(req.body, (err, results) => {
+    newSeeker.birth_date = `${birth_date.getFullYear()}-${birth_date.getMonth()}-${birth_date.getDate()}`;
+
+    JobSeeker.createSeeker(newSeeker, phone, (err, results, fields) => {
+        if (err) return next(err);
+        res.send(results);
+    });
+});
+
+router.post("/interests", (req, res, next) => {
+    const { error } = validateInterests(req.body);
+    if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);
+
+    JobSeeker.addInterests(req.body, (err, results) => {
         if (err) return next(err.sqlMessage);
         res.send(results);
     });
 });
 
-function validateUser(user) {
-    const schema = Joi.object({
-        gender: Joi.string().required(),
-        birth_date: Joi.date().required(),
-        email: Joi.string().required(),
-        password: Joi.string().required().min(8),
-        cv: Joi.string(),
-        marital_status: Joi.string().required(),
-        military_status: Joi.string().required(),
-        first_name: Joi.string().required().min(3),
-        last_name: Joi.string().required().min(3),
-        location: Joi.string().required(),
-        age: Joi.number()
-    });
+router.post("/prof-info", (req, res, next) => {
+    const { error } = validateProf(req.body);
+    if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);
+    const startDate = new Date(req.body.qualification.startDate);
+    const endDate = new Date(req.body.qualification.endDate);
+    req.body.qualification.startDate = `${startDate.getFullYear()}-${startDate.getMonth()}-${startDate.getDate()}`;
+    req.body.qualification.endDate = `${endDate.getFullYear()}-${endDate.getMonth()}-${endDate.getDate()}`;
 
-    return schema.validate(user)
-}
+    JobSeeker.addProfInfo(req.body, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
 
 module.exports = router;
