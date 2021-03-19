@@ -1,10 +1,10 @@
 {
-    "jwtPrivateKey": "",
+    "jwtPrivateKey": "jobit_secretkey",
     "db": {
-        "host": "DB_HOSTNAME",
+        "host": "DB_URL",
         "password": "DB_PASSWORD",
         "port": "3306",
-        "user": "DB_USERNAME",
+        "user": "sql4399692",
         "database": "DB_DATABASE"
     }
 }

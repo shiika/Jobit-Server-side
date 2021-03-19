@@ -7,10 +7,10 @@ const error = require("./middleware/error");
 const jobSeeker = require("./routes/jobSeeker");
 const validators = require("./routes/validators");
 
-// if (!config.get("jwtPrivateKey")) {
-//     console.log("FATAL ERROR: jwtPrivateKey is not defined");
-//     process.exit(1);
-// }
+if (!config.get("jwtPrivateKey")) {
+    console.log("FATAL ERROR: jwtPrivateKey is not defined");
+    process.exit(1);
+}
 
 app.use(json);
 app.use(cors());
