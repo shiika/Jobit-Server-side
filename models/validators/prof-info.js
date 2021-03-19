@@ -11,7 +11,7 @@ module.exports = function(user) {
             fieldOfStudy: Joi.string(),
             startDate: Joi.date(),
             endDate: Joi.date(),
-            graduationGrade: Joi.string().max(1)
+            gradGrade: Joi.string().max(1)
         })
     });
 
