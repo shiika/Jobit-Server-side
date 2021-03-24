@@ -187,7 +187,6 @@ module.exports = {
                         finalLang.unshift(seekerId);
                         return finalLang
                     });
-                    console.log(langsRows, langs, info.langs, langsResults);
 
                     connection.query(
                         `INSERT INTO seeker_langs VALUES ?`,

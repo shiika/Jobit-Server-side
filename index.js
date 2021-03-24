@@ -5,6 +5,7 @@ const json = express.json();
 const app = express();
 const error = require("./middleware/error");
 const jobSeeker = require("./routes/jobSeeker");
+const employer = require("./routes/employer");
 const validators = require("./routes/validators");
 
 if (!config.get("jwtPrivateKey")) {
@@ -16,6 +17,7 @@ app.use(json);
 app.use(cors());
 app.use("/api/validate", validators);
 app.use("/api/seeker", jobSeeker);
+app.use("/api/employer", employer);
 
 app.use(error);
 

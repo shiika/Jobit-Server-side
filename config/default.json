@@ -1,10 +1,10 @@
 {
-    "jwtPrivateKey": "",
+    "jwtPrivateKey": "jobit_secretkey",
     "db": {
         "host": "localhost",
-        "password": "DB_PASSWORD",
+        "password": "Shikasql27",
         "port": "3306",
-        "user": "islam",
+        "user": "root",
         "database": "mydb"
     }
 }

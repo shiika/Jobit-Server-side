@@ -1,5 +1,5 @@
 {
-    "jwtPrivateKey": "",
+    "jwtPrivateKey": "jobit_secretkey",
     "db": {
         "host": "DB_HOSTNAME",
         "password": "DB_PASSWORD",

@@ -27,7 +27,7 @@ router.post("/auth/register", (req, res, next) => {
 
     JobSeeker.createSeeker(newSeeker, phone, (err, results, fields) => {
         if (err) return next(err);
-        res.send(results);
+        res.send("Seeker created successfully");
     });
 });
 
@@ -37,7 +37,7 @@ router.post("/interests", (req, res, next) => {
 
     JobSeeker.addInterests(req.body, (err, results) => {
         if (err) return next(err.sqlMessage);
-        res.send(results);
+        res.send("Career interests has been added");
     });
 });
 
@@ -51,7 +51,7 @@ router.post("/prof-info", (req, res, next) => {
 
     JobSeeker.addProfInfo(req.body, (err, results) => {
         if (err) return next(err.sqlMessage);
-        res.send(results);
+        res.send("Professional info has been added");
     });
 });
 
