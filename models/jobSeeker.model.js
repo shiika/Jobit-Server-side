@@ -1,5 +1,6 @@
 const connection = require("../db");
-
+const jwt = require("jsonwebtoken");
+const config = require("config");
 let seekerId = 7;
 
 module.exports = {
@@ -37,7 +38,11 @@ module.exports = {
                 if (error) return next(error, null);
 
                 seekerId = results.insertId;
-                connection.query("INSERT INTO seeker_phone SET seeker_id = ?, phone_num = ?", [seekerId, phone], next)
+                connection.query(
+                    "INSERT INTO seeker_phone SET seeker_id = ?, phone_num = ?", 
+                    [seekerId, phone],
+                    next
+                    )
             }
         )
     },
