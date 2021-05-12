@@ -84,8 +84,8 @@ module.exports = {
                     bcrypt.compare(credentials.password, results[0].password)
                         .then(isMatch => {
                             if (isMatch) {
-                                const token = jwt.sign({...results[0], userType}, config.get("jwtPrivateKey"), { expiresIn: 600 });
-                                return next(null, token)
+                                const token = jwt.sign({...results[0], userType}, config.get("jwtPrivateKey"), { expiresIn: "1h" });
+                                return next(null, {token, userId: results[0].ID})
                             } else {
                                 return next("Wrong password. Check your password again", null);
                             }

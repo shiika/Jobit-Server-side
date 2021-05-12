@@ -34,9 +34,9 @@ router.post("/emp-register", signup, (req, res, next) => {
 router.post("/login", (req, res, next) => {
     const credentials = req.body;
     const userType = req.header("x-user-type");
-    Auth.authUser(credentials, userType, (err, token) => {
+    Auth.authUser(credentials, userType, (err, credentials) => {
         if (err) return res.status(401).send(err);
-        res.send(token);
+        res.send(credentials);
     });
 })
 

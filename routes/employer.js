@@ -4,21 +4,18 @@ const Employer = require("../models/employer.model");
 const validateInterests = require("../models/validators/interests");
 
 router.post("/post", (req, res, next) => {
-    const userType = req.headers["x-user-type"];
-    if (userType != "employer") {
-        return res.status(401).send("You don't have permission to post job");
-    }
-
-    const publishDate = new Date(req.body.job.publishDate);
-    req.body.job.publishDate = `${publishDate.getFullYear()}-${publishDate.getMonth()}-${publishDate.getDate()}`;
-
-    const expireDate = new Date(req.body.job.expireDate);
-    req.body.job.expireDate = `${expireDate.getFullYear()}-${expireDate.getMonth()}-${expireDate.getDate()}`;
-
-    Employer.postJob(req.body.credentials, req.body.job, (err, results) => {
+    
+    const publishDate = new Date(req.body.publishDate);
+    req.body.publishDate = `${publishDate.getFullYear()}-${publishDate.getMonth()}-${publishDate.getDate()}`;
+    
+    const expireDate = new Date(req.body.expireDate);
+    req.body.expireDate = `${expireDate.getFullYear()}-${expireDate.getMonth()}-${expireDate.getDate()}`;
+    
+    Employer.postJob(req.headers["x-access-token"], req.body, (err, results) => {
+        
         if (err) return next(err);
+        else if (err === "Unauthorized") return res.status(401).send("You dont have permission to post a job!");
         res.send(results);
-        // res.send(results);
     })
 });
 

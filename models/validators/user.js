@@ -5,6 +5,7 @@ module.exports = function(user) {
         gender: Joi.string().required(),
         birth_date: Joi.date().required(),
         phone: Joi.string().min(11),
+        image_url: Joi.string(),
         email: Joi.string().email().required(),
         password: Joi.string().required().min(8),
         cv: Joi.string(),
