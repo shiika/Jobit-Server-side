@@ -5,3 +5,4 @@ JOIN seeker_skills ss
     AND js.ID = ss.seeker_id
 LEFT JOIN skills s
 	ON s.ID = ss.skill_id
+LIMIT 4

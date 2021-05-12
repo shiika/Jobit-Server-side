@@ -4,6 +4,30 @@ const validateInterests = require("../models/validators/interests");
 const validateProf = require("../models/validators/prof-info");
 const JobSeeker = require("../models/jobSeeker.model");
 
+router.get("/profile", (req, res, next) => {
+    const userId = req.header("user-id");
+    JobSeeker.getSeeker(userId, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
+router.get("/skills", (req, res, next) => {
+    const userId = req.header("user-id");
+    JobSeeker.getSkills(userId, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
+router.get("/langs", (req, res, next) => {
+    const userId = req.header("user-id");
+    JobSeeker.getLangs(userId, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
 router.post("/interests", (req, res, next) => {
     const { error } = validateInterests(req.body);
     if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);

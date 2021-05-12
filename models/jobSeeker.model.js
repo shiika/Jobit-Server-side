@@ -218,5 +218,63 @@ module.exports = {
                 return next(null, results)
             }
         )
-    }
+    },
+
+    getSeeker: function(userId, next) {
+
+        connection.query(`
+        SELECT js.first_name, js.last_name, js.email, js.location, js.image_url, js.military_status, js.marital_status, js.gender, js.birth_date, sp.phone_num, r.role_name
+        FROM job_seeker js
+        JOIN seeker_role sr
+            ON sr.seeker_id = js.ID
+            AND js.ID = ?
+        JOIN roles r
+            ON r.ID = sr.role_id
+        JOIN seeker_phone sp
+            ON sp.seeker_id = ?
+        limit 1
+        `,
+        [userId, userId],
+        (err, results) => {
+            if (err) return next(err, null);
+            return next(null, results[0])
+        })
+    },
+    getSkills: function(userId, next) {
+        connection.query(`
+        SELECT s.skill_name
+        FROM job_seeker js
+        JOIN seeker_skills ss
+            ON js.ID = ?
+            AND js.ID = ss.seeker_id
+        LEFT JOIN skills s
+            ON s.ID = ss.skill_id
+        LIMIT 4
+        `,
+        [userId],
+        (err, results) => {
+            if (err) return next(err, null);
+            const skills = results.map((item, index) => {
+                return item["skill_name"]
+            })
+            return next(null, skills)
+        })
+    },
+
+    getLangs: function(userId, next) {
+        connection.query(`
+        SELECT l.name, sl.level
+        FROM job_seeker js
+        JOIN seeker_langs sl
+            ON js.ID = ?
+            AND js.ID = sl.seeker_id
+        LEFT JOIN languages l
+            ON l.ID = sl.lang_id
+        `,
+        [userId],
+        (err, results) => {
+            if (err) return next(err, null);
+            return next(null, results)
+        })
+    },
 };
