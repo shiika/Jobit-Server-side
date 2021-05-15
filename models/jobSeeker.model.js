@@ -1,7 +1,7 @@
 const connection = require("../db");
 const jwt = require("jsonwebtoken");
 const config = require("config");
-let seekerId = 7;
+let seekerId;
 
 module.exports = {
     checkEmail: function(email, next) {
@@ -277,4 +277,27 @@ module.exports = {
             return next(null, results)
         })
     },
+
+    addExp: function(userId, exp, next) {
+        connection.query(`
+            INSERT INTO work_experience SET ?
+        `,
+        { salary: exp.salary, company_name: exp.companyName, job_title: exp.title, job_type: exp.jobType, start_date: exp.startDate, end_date: exp.end_date, seeker_id: userId },
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
+
+    getExp: function(userId, next) {
+        connection.query(` SELECT salary, company_name, job_type, job_title, start_date, end_date
+        FROM work_experience WHERE seeker_id = ? `,
+        [userId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results);
+        })
+    }
 };

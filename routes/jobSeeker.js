@@ -4,6 +4,14 @@ const validateInterests = require("../models/validators/interests");
 const validateProf = require("../models/validators/prof-info");
 const JobSeeker = require("../models/jobSeeker.model");
 
+router.get("/exp", (req, res, next) => {
+    const userId = req.header("user-id");
+    JobSeeker.getExp(userId, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
 router.get("/profile", (req, res, next) => {
     const userId = req.header("user-id");
     JobSeeker.getSeeker(userId, (err, results) => {
@@ -51,5 +59,18 @@ router.post("/prof-info", (req, res, next) => {
         res.send("Professional info has been added");
     });
 });
+
+router.post("/add-exp", (req, res, next) => {
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+    req.body.startDate = `${startDate.getFullYear()}-${startDate.getMonth()}-${startDate.getDate()}`;
+    req.body.endDate = `${endDate.getFullYear()}-${endDate.getMonth()}-${endDate.getDate()}`;
+
+    JobSeeker.addExp(req.header("user-id"), {...req.body, start_date: req.body.startDate, end_date: req.body.endDate}, (err, results) => {
+        if (err) return next(err);
+        res.send(results);
+    })
+
+})
 
 module.exports = router;
