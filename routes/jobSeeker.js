@@ -12,6 +12,21 @@ router.get("/exp", (req, res, next) => {
     });
 });
 
+router.delete("/del-exp", (req, res, next) => {
+    JobSeeker.removeExp(req.query.id, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
+router.get("/edu", (req, res, next) => {
+    const userId = req.header("user-id");
+    JobSeeker.getEdu(userId, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
 router.get("/profile", (req, res, next) => {
     const userId = req.header("user-id");
     JobSeeker.getSeeker(userId, (err, results) => {
@@ -68,7 +83,20 @@ router.post("/add-exp", (req, res, next) => {
 
     JobSeeker.addExp(req.header("user-id"), {...req.body, start_date: req.body.startDate, end_date: req.body.endDate}, (err, results) => {
         if (err) return next(err);
-        res.send(results);
+        res.status(200).send("Experience addedd successfully");
+    })
+
+});
+
+router.post("/add-edu", (req, res, next) => {
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+    req.body.startDate = `${startDate.getFullYear()}-${startDate.getMonth()}-${startDate.getDate()}`;
+    req.body.endDate = `${endDate.getFullYear()}-${endDate.getMonth()}-${endDate.getDate()}`;
+
+    JobSeeker.addEdu(req.header("user-id"), {...req.body, start_date: req.body.startDate, end_date: req.body.endDate}, (err, results) => {
+        if (err) return next(err);
+        res.status(200).send("Experience addedd successfully");
     })
 
 })

@@ -291,8 +291,40 @@ module.exports = {
     },
 
     getExp: function(userId, next) {
-        connection.query(` SELECT salary, company_name, job_type, job_title, start_date, end_date
+        connection.query(` SELECT ID, salary, company_name, job_type, job_title, start_date, end_date
         FROM work_experience WHERE seeker_id = ? `,
+        [userId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results);
+        })
+    },
+
+    removeExp: function(id, next) {
+        connection.query(` DELETE FROM work_experience WHERE ID = ? `,
+        [id],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results);
+        })
+    },
+    addEdu: function(userId, edu, next) {
+        connection.query(`
+            INSERT INTO job_qualification SET ?
+        `,
+        {degree_level: edu.degreeLevel, institution: edu.institution, field_of_study: edu.fieldOfStudy, start_date: edu.startDate, end_date: edu.endDate, gradation_grade: edu.grade, seeker_id: userId},
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
+
+    getEdu: function(userId, next) {
+        connection.query(` SELECT degree_level, institution, field_of_study, graduation_grade, start_date, end_date
+        FROM job_qualification WHERE seeker_id = ? `,
         [userId],
         (err, results) => {
             if (err) return next(err, null);
