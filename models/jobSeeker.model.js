@@ -29,6 +29,25 @@ module.exports = {
             )
     },
 
+    updateSeeker: function(seeker,userId, phone, next) {
+
+        connection.query(
+            `UPDATE job_seeker SET first_name = ?, last_name = ?, location = ?, marital_status = ?, military_status = ?, image_url = ? WHERE ID = ?`, 
+            [seeker.first_name, seeker.last_name, seeker.location, seeker.marital_status, seeker.military_status, seeker.image_url, userId],
+            (error, results) => {
+                if (error) return next(error, null);
+
+                connection.query(
+                    `UPDATE seeker_phone SET phone_num = ? WHERE seeker_id = ?`,
+                    [phone, userId],
+                    (err, results) => {
+                        if (err) return next(err, null);
+
+                        return next(null, results);
+                    })
+            }
+        )
+    },
     createSeeker: function(seeker, phone, next) {
 
         connection.query(
@@ -45,6 +64,65 @@ module.exports = {
                     )
             }
         )
+    },
+
+    updateInterests: function(interests, userId, next) {
+        connection.beginTransaction((transErr) => {
+            if (transErr) return next(transErr, null);
+
+            connection.query(
+                `UPDATE career_interests SET min_salary = ?, expYears = ?, educationLevel = ?, status = ?,
+                    level_id = (SELECT ID FROM career_level WHERE level_name = ?), seeker_id = ?
+                    WHERE seeker_id = ?`,
+                [interests.min_salary, interests.expYears, interests.educationLevel, interests.status, interests.careerLevel, userId, userId],
+                (queryErr, results) => {
+                    if (queryErr) {
+                        return connection.rollback(() => next(queryErr, null))
+                    }
+
+                    connection.commit((commitErr) => {
+                        if (commitErr) return next(commitErr, null);
+                        console.log("Committed Successfully");
+                        return next(null, results)
+                    })
+                }
+            );
+        });
+
+    },
+    getInterests: function(userId, next) {
+        connection.beginTransaction((transErr) => {
+            if (transErr) return next(transErr, null);
+
+            connection.query(
+                `SELECT ci.min_salary, cl.level_name, ci.expYears, ci.educationLevel, ci.status
+                FROM career_interests ci
+                JOIN career_level cl
+                    ON cl.ID = ci.level_id
+                    AND ci.seeker_id = ?`,
+                [userId],
+                (queryErr, interests) => {
+                    if (queryErr) {
+                        return connection.rollback(() => next(queryErr, null))
+                    }
+                    connection.query(`
+                    SELECT type_name FROM job_types
+                    JOIN seeker_types
+                        ON seeker_types.type_id = job_types.ID
+                        AND seeker_types.seeker_id = ?
+                    `, [userId], (err, jobTypes) => {
+                        if (err) return next(err, null);
+                        
+                        connection.commit((commitErr) => {
+                            if (commitErr) return next(commitErr, null);
+                            console.log("Committed Successfully");
+                            return next(null, {types: Object.values(jobTypes.map(item => item.type_name)), interests: interests[0]})
+                        })
+                    })
+                }
+            );
+        });
+
     },
 
     addInterests: function(interests, next) {
@@ -314,7 +392,7 @@ module.exports = {
         connection.query(`
             INSERT INTO job_qualification SET ?
         `,
-        {degree_level: edu.degreeLevel, institution: edu.institution, field_of_study: edu.fieldOfStudy, start_date: edu.startDate, end_date: edu.endDate, gradation_grade: edu.grade, seeker_id: userId},
+        {degree_level: edu.degreeLevel, institution: edu.institution, field_of_study: edu.fieldOfStudy, start_date: edu.startDate, end_date: edu.endDate, graduation_grade: edu.grade, seeker_id: userId},
         (err, results) => {
             if (err) return next(err, null);
 
