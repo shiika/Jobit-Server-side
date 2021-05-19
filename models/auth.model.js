@@ -16,8 +16,8 @@ module.exports = {
                     const newCompany = results.find(result => result.name === empInfo.companyForm.name);
                     if (!newCompany) {
                         connection.query(
-                            `INSERT INTO company SET name = ?, website = ?`,
-                            [empInfo.companyForm.name, empInfo.companyForm.website],
+                            `INSERT INTO company SET name = ?, website = ?, logo = ?`,
+                            [empInfo.companyForm.name, empInfo.companyForm.website, empInfo.companyForm.logo],
                             (err, results) => {
                                 if (err) return next(err, null);
 

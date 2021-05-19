@@ -47,7 +47,7 @@ router.get("/edu", auth, (req, res, next) => {
 });
 
 router.get("/profile", auth, (req, res, next) => {
-    const userId = req.user.ID;
+    const userId = req.header("seeker-id") || req.user.ID;
     JobSeeker.getSeeker(userId, (err, results) => {
         if (err) return next(err.sqlMessage);
         res.send(results);

@@ -84,7 +84,7 @@ module.exports = {
                                             connection.commit((err) => {
                                                 if (err) return connection.rollback(() => next(err, null));
 
-                                                next(null, "Job has been posted successfully")
+                                                return next(null, "Job has been posted successfully")
                                             });
                                         }
                                     );
@@ -98,5 +98,87 @@ module.exports = {
                 return next("Invalid token. Please verify your credentials")
             }
         })
-    }
+    },
+
+    getEmployees: function(userId, next) {
+        connection.query(`
+        SELECT js.ID, js.first_name, js.last_name, js.image_url, r.role_name, ci.min_salary
+        FROM job_seeker js
+        JOIN seeker_role sr
+            ON sr.seeker_id = js.ID
+        JOIN roles r
+            ON r.ID = sr.role_id
+        JOIN career_interests ci
+            ON ci.seeker_id = js.ID
+        `,
+        [userId, userId],
+        (err, info) => {
+            if (err) return next(err, null);
+            let newInfo = info.filter((seeker, si) => {
+                if (seeker.ID === info[info.length - 1].ID && si == 0) {
+                    return seeker
+                }
+                if (si === info.length - 1) {
+                    return seeker.ID !== info[0].ID
+                } 
+                return seeker.ID !== info[si + 1].ID;
+            });
+            
+            return next(null, newInfo)
+        })
+    },
+
+    getJobs: function(title, userId, next) {
+        connection.beginTransaction(err => {
+            if (err) return next(err, null);
+
+            connection.query(`
+            SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo
+            FROM job j
+            JOIN employer e
+                ON e.ID = j.employer_id
+            JOIN company c
+                ON c.ID = e.company_id
+            `, (err, jobs) => {
+                if (err) return connection.rollback(() => next(err, null));
+                    if (err) return connection.rollback(() => next(err, null));
+
+                    connection.commit(err => {
+                        if (err) return connection.rollback(() => next(err, null));
+
+                        return next(null, jobs)
+                    })
+            })
+
+        })
+    },
+
+    getSkills: function(jobId, next) {
+        connection.beginTransaction(err => {
+            if (err) return next(err, null);
+
+            connection.query(`
+            SELECT s.skill_name
+            FROM skills s
+            JOIN job_skills js
+                ON s.ID = js.skill_id
+            JOIN job j
+                ON j.ID = js.job_id
+                AND j.ID = ?
+            `,
+            [jobId], 
+            (err, skills) => {
+                if (err) return connection.rollback(() => next(err, null));
+                    if (err) return connection.rollback(() => next(err, null));
+
+                    connection.commit(err => {
+                        if (err) return connection.rollback(() => next(err, null));
+                        const newSkills = skills.map(item => item["skill_name"])
+
+                        return next(null, newSkills)
+                    })
+            })
+
+        })
+    },
 }
