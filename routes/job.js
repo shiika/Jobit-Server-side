@@ -33,8 +33,6 @@ router.get("/jobs", auth, (req, res, next) => {
     const empId = req.user.ID;
     Job.getEmployerJob(empId, (err, results) => {
         if (err) return next(err);
-        console.log(results);
-        console.log(err);
         res.send(results);
     })
 });
