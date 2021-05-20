@@ -1,8 +1,7 @@
 const connection = require("../db");
-const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
-let jobId = null;
+let jobId;
 
 module.exports = {
     postJob: function (token, job, next) {
@@ -69,6 +68,8 @@ module.exports = {
                                                     if (err) return connection.rollback(() => next(err, null));
                                                     connection.commit((err) => {
                                                         if (err) return connection.rollback(() => next(err, null));
+
+                                                        return next(null, "Job has been posted successfully")
                                                     });
                                                 }
                                             )
@@ -99,87 +100,34 @@ module.exports = {
             }
         })
     },
-
-    getEmployees: function(userId, next) {
+    applyForJob: function(jobId, seekerId, date, next) {
         connection.query(`
-        SELECT js.ID, js.first_name, js.last_name, js.image_url, r.role_name, ci.min_salary
-        FROM job_seeker js
-        JOIN seeker_role sr
-            ON sr.seeker_id = js.ID
-        JOIN roles r
-            ON r.ID = sr.role_id
-        JOIN career_interests ci
-            ON ci.seeker_id = js.ID
+            INSERT INTO applying_status SET job_id = ?, seeker_id = ?, status_id = 5, state_date = ?
         `,
-        [userId, userId],
-        (err, info) => {
+        [jobId, seekerId, date],
+        (err, results) => {
             if (err) return next(err, null);
-            let newInfo = info.filter((seeker, si) => {
-                if (seeker.ID === info[info.length - 1].ID && si == 0) {
-                    return seeker
-                }
-                if (si === info.length - 1) {
-                    return seeker.ID !== info[0].ID
-                } 
-                return seeker.ID !== info[si + 1].ID;
-            });
-            
-            return next(null, newInfo)
+
+            return next(null, results);
         })
     },
-
-    getJobs: function(title, userId, next) {
-        connection.beginTransaction(err => {
-            if (err) return next(err, null);
-
-            connection.query(`
-            SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
+    getEmployerJob: function(empId, next) {
+        connection.query(`
+        SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
             FROM job j
             JOIN employer e
                 ON e.ID = j.employer_id
+                AND j.employer_id = ?
             JOIN company c
                 ON c.ID = e.company_id
 			JOIN job_types jt
 				ON jt.ID = j.type_id
-            `, (err, jobs) => {
-                if (err) return connection.rollback(() => next(err, null));
-
-                    connection.commit(err => {
-                        if (err) return connection.rollback(() => next(err, null));
-
-                        return next(null, jobs)
-                    })
-            })
-
-        })
-    },
-
-    getSkills: function(jobId, next) {
-        connection.beginTransaction(err => {
+        `,
+        [empId],
+        (err, jobs) => {
             if (err) return next(err, null);
 
-            connection.query(`
-            SELECT s.skill_name
-            FROM skills s
-            JOIN job_skills js
-                ON s.ID = js.skill_id
-            JOIN job j
-                ON j.ID = js.job_id
-                AND j.ID = ?
-            `,
-            [jobId], 
-            (err, skills) => {
-                if (err) return connection.rollback(() => next(err, null));
-                    if (err) return connection.rollback(() => next(err, null));
-
-                    connection.commit(err => {
-                        if (err) return connection.rollback(() => next(err, null));
-                        const newSkills = skills.map(item => item["skill_name"])
-
-                        return next(null, newSkills)
-                    })
-            })
-
+            return next(null, jobs)
         })
-    },
+    }
 }
