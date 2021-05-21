@@ -36,15 +36,7 @@ module.exports = {
             [seeker.first_name, seeker.last_name, seeker.location, seeker.marital_status, seeker.military_status, seeker.image_url, userId],
             (error, results) => {
                 if (error) return next(error, null);
-
-                pool.query(
-                    `UPDATE seeker_phone SET phone_num = ? WHERE seeker_id = ?`,
-                    [phone, userId],
-                    (err, results) => {
-                        if (err) return next(err, null);
-
-                        return next(null, results);
-                    })
+                return next(null, results);
             }
         )
     },
