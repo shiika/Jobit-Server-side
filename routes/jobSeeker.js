@@ -6,7 +6,7 @@ const JobSeeker = require("../models/jobSeeker.model");
 const auth = require("../middleware/auth");
 
 router.get("/exp", auth, (req, res, next) => {
-    const userId = req.user.ID;
+    const userId = req.header("seeker-id") || req.user.ID;
     JobSeeker.getExp(userId, (err, results) => {
         if (err) return next(err.sqlMessage);
         res.send(results);
@@ -39,7 +39,7 @@ router.delete("/del-exp", auth, (req, res, next) => {
 });
 
 router.get("/edu", auth, (req, res, next) => {
-    const userId = req.header("user-id");
+    const userId = req.header("seeker-id") || req.user.ID;
     JobSeeker.getEdu(userId, (err, results) => {
         if (err) return next(err.sqlMessage);
         res.send(results);
@@ -63,7 +63,7 @@ router.get("/get-interests", auth, (req, res, next) => {
 });
 
 router.get("/skills", auth, (req, res, next) => {
-    const userId = req.user.ID;
+    const userId = req.header("seeker-id") || req.user.ID;
     JobSeeker.getSkills(userId, (err, results) => {
         if (err) return next(err.sqlMessage);
         res.send(results);
@@ -71,7 +71,7 @@ router.get("/skills", auth, (req, res, next) => {
 });
 
 router.get("/langs", auth, (req, res, next) => {
-    const userId = req.user.ID;
+    const userId = req.header("seeker-id") || req.user.ID;
     JobSeeker.getLangs(userId, (err, results) => {
         if (err) return next(err.sqlMessage);
         res.send(results);
