@@ -1,11 +1,11 @@
-const connection = require("../db");
+const pool = require("../db");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 let jobId;
 
 module.exports = {
     postJob: function (token, job, next) {
-        connection.beginTransaction((err) => {
+        pool.beginTransaction((err) => {
             if (err) return next(err, null);
 
             try {
@@ -15,12 +15,12 @@ module.exports = {
                     return next("Unauthorized", null);
                 }
 
-                connection.query(`
+                pool.query(`
                     SELECT ID FROM job_types WHERE type_name = ?
                     `,
                     job.type,
                     (err, typeId) => {
-                        if (err) return connection.rollback(() => next(err, null));
+                        if (err) return pool.rollback(() => next(err, null));
                         console.log(typeId);
 
                         const jobRecord = {
@@ -35,7 +35,7 @@ module.exports = {
                             type_id: typeId[0]["ID"]
                         };
 
-                        connection.query(`
+                        pool.query(`
                         INSERT INTO job SET ?
                     `,
                             jobRecord,
@@ -44,10 +44,10 @@ module.exports = {
                                 jobId = results["insertId"];
                         });
 
-                        connection.query(
+                        pool.query(
                             `SELECT skill_name FROM skills`,
                             (err, results) => {
-                                if (err) return connection.rollback(() => next(err, null));
+                                if (err) return pool.rollback(() => next(err, null));
                                 const resultsSkills = results.map((item) => {
                                     return item.skill_name
                                 });
@@ -57,18 +57,18 @@ module.exports = {
                                     })
                                 }).map(item => [item]);
                                 if (skills.length > 0) {
-                                    connection.query(
+                                    pool.query(
                                         `INSERT INTO skills(skill_name) VALUES ?`,
                                         [skills],
                                         (err, results) => {
-                                            if (err) return connection.rollback(() => next(err, null));
-                                            connection.query(
+                                            if (err) return pool.rollback(() => next(err, null));
+                                            pool.query(
                                                 `INSERT INTO job_skills SELECT ?, ID FROM skills WHERE skill_name in (${job.skills.map((item) => `"${item}"`).toString()})`,
                                                 [jobId],
                                                 (err, results) => {
-                                                    if (err) return connection.rollback(() => next(err, null));
-                                                    connection.commit((err) => {
-                                                        if (err) return connection.rollback(() => next(err, null));
+                                                    if (err) return pool.rollback(() => next(err, null));
+                                                    pool.commit((err) => {
+                                                        if (err) return pool.rollback(() => next(err, null));
 
                                                         return next(null, "Job has been posted successfully")
                                                     });
@@ -78,13 +78,13 @@ module.exports = {
                                     );
 
                                 } else {
-                                    connection.query(
+                                    pool.query(
                                         `INSERT INTO job_skills SELECT ?, ID FROM skills WHERE skill_name in (${job.skills.map((item) => `"${item}"`).toString()})`,
                                         [jobId],
                                         (err, results) => {
-                                            if (err) return connection.rollback(() => next(err, null));
-                                            connection.commit((err) => {
-                                                if (err) return connection.rollback(() => next(err, null));
+                                            if (err) return pool.rollback(() => next(err, null));
+                                            pool.commit((err) => {
+                                                if (err) return pool.rollback(() => next(err, null));
 
                                                 return next(null, "Job has been posted successfully")
                                             });
@@ -102,7 +102,7 @@ module.exports = {
         })
     },
     applyForJob: function(jobId, seekerId, date, next) {
-        connection.query(`
+        pool.query(`
             INSERT INTO applying_status SET job_id = ?, seeker_id = ?, status_id = 5, state_date = ?
         `,
         [jobId, seekerId, date],
@@ -113,7 +113,7 @@ module.exports = {
         })
     },
     getEmployerJob: function(empId, next) {
-        connection.query(`
+        pool.query(`
         SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
             FROM job j
             JOIN employer e

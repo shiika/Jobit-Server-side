@@ -1,21 +1,21 @@
-const connection = require("../db");
+const pool = require("../db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 
 module.exports = {
     createEmployer: function(empInfo, next) {
-        connection.beginTransaction((err) => {
+        pool.beginTransaction((err) => {
             if (err) return next(err, null);
 
-            connection.query(
+            pool.query(
                 `SELECT * FROM company`,
                 (err, results) => {
                     if (err) return next(err, null);
 
                     const newCompany = results.find(result => result.name === empInfo.companyForm.name);
                     if (!newCompany) {
-                        connection.query(
+                        pool.query(
                             `INSERT INTO company SET name = ?, website = ?, logo = ?`,
                             [empInfo.companyForm.name, empInfo.companyForm.website, empInfo.companyForm.logo],
                             (err, results) => {
@@ -29,13 +29,13 @@ module.exports = {
                                     last_name: empInfo.lastName,
                                 };
 
-                                connection.query(
+                                pool.query(
                                     `INSERT INTO employer SET ?`,
                                     empRecord,
                                     (err, results) => {
                                         if (err) return next(err, null);
 
-                                        connection.commit((err) => {
+                                        pool.commit((err) => {
                                             if (err) return next(err, null);
 
                                             return next(null, results)
@@ -52,13 +52,13 @@ module.exports = {
                             first_name: empInfo.firstName,
                             last_name: empInfo.lastName,
                         };
-                        connection.query(
+                        pool.query(
                             `INSERT INTO employer SET ?`,
                             empRecord,
                             (err, results) => {
                                 if (err) return next(err, null);
     
-                                connection.commit((err) => {
+                                pool.commit((err) => {
                                     if (err) return next(err, null);
     
                                     return next(null, results)
@@ -74,7 +74,7 @@ module.exports = {
     },
 
     authUser: function(credentials, userType, next) {
-        connection.query(
+        pool.query(
             `SELECT ID, first_name, email, password FROM ${userType} WHERE email = ?`,
             [credentials.email],
             (err, results) => {

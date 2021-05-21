@@ -1,11 +1,11 @@
-const connection = require("../db");
+const pool = require("../db");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 let seekerId;
 
 module.exports = {
     checkEmail: function(email, next) {
-        connection.query(
+        pool.query(
             `SELECT email FROM job_seeker 
             WHERE email = ?`,
             email,
@@ -14,7 +14,7 @@ module.exports = {
     },
 
     checkPhone: function(phone, next) {
-        connection.query(
+        pool.query(
             `SELECT phone_num 
             FROM seeker_phone
             WHERE phone_num = ?`,
@@ -23,7 +23,7 @@ module.exports = {
     },
 
     getTitles: function(next) {
-        connection.query(
+        pool.query(
             `SELECT role_name FROM roles`,
             next
             )
@@ -31,13 +31,13 @@ module.exports = {
 
     updateSeeker: function(seeker,userId, phone, next) {
 
-        connection.query(
+        pool.query(
             `UPDATE job_seeker SET first_name = ?, last_name = ?, location = ?, marital_status = ?, military_status = ?, image_url = ? WHERE ID = ?`, 
             [seeker.first_name, seeker.last_name, seeker.location, seeker.marital_status, seeker.military_status, seeker.image_url, userId],
             (error, results) => {
                 if (error) return next(error, null);
 
-                connection.query(
+                pool.query(
                     `UPDATE seeker_phone SET phone_num = ? WHERE seeker_id = ?`,
                     [phone, userId],
                     (err, results) => {
@@ -50,14 +50,14 @@ module.exports = {
     },
     createSeeker: function(seeker, phone, next) {
 
-        connection.query(
+        pool.query(
             `INSERT INTO job_seeker SET ?`, 
             seeker,
             (error, results) => {
                 if (error) return next(error, null);
 
                 seekerId = results.insertId;
-                connection.query(
+                pool.query(
                     "INSERT INTO seeker_phone SET seeker_id = ?, phone_num = ?", 
                     [seekerId, phone],
                     next
@@ -67,20 +67,20 @@ module.exports = {
     },
 
     updateInterests: function(interests, userId, next) {
-        connection.beginTransaction((transErr) => {
+        pool.beginTransaction((transErr) => {
             if (transErr) return next(transErr, null);
 
-            connection.query(
+            pool.query(
                 `UPDATE career_interests SET min_salary = ?, expYears = ?, educationLevel = ?, status = ?,
                     level_id = (SELECT ID FROM career_level WHERE level_name = ?), seeker_id = ?
                     WHERE seeker_id = ?`,
                 [interests.min_salary, interests.expYears, interests.educationLevel, interests.status, interests.careerLevel, userId, userId],
                 (queryErr, results) => {
                     if (queryErr) {
-                        return connection.rollback(() => next(queryErr, null))
+                        return pool.rollback(() => next(queryErr, null))
                     }
 
-                    connection.commit((commitErr) => {
+                    pool.commit((commitErr) => {
                         if (commitErr) return next(commitErr, null);
                         console.log("Committed Successfully");
                         return next(null, results)
@@ -91,10 +91,10 @@ module.exports = {
 
     },
     getInterests: function(userId, next) {
-        connection.beginTransaction((transErr) => {
+        pool.beginTransaction((transErr) => {
             if (transErr) return next(transErr, null);
 
-            connection.query(
+            pool.query(
                 `SELECT ci.min_salary, cl.level_name, ci.expYears, ci.educationLevel, ci.status
                 FROM career_interests ci
                 JOIN career_level cl
@@ -103,9 +103,9 @@ module.exports = {
                 [userId],
                 (queryErr, interests) => {
                     if (queryErr) {
-                        return connection.rollback(() => next(queryErr, null))
+                        return pool.rollback(() => next(queryErr, null))
                     }
-                    connection.query(`
+                    pool.query(`
                     SELECT type_name FROM job_types
                     JOIN seeker_types
                         ON seeker_types.type_id = job_types.ID
@@ -113,7 +113,7 @@ module.exports = {
                     `, [userId], (err, jobTypes) => {
                         if (err) return next(err, null);
                         
-                        connection.commit((commitErr) => {
+                        pool.commit((commitErr) => {
                             if (commitErr) return next(commitErr, null);
                             console.log("Committed Successfully");
                             return next(null, {types: Object.values(jobTypes.map(item => item.type_name)), interests: interests[0]})
@@ -126,24 +126,24 @@ module.exports = {
     },
 
     addInterests: function(interests, next) {
-        connection.beginTransaction((transErr) => {
+        pool.beginTransaction((transErr) => {
             if (transErr) return next(transErr, null);
 
-            connection.query(
+            pool.query(
                 `INSERT INTO career_interests SET min_salary = ?, expYears = ?, educationLevel = ?, status = ?,
                     level_id = (SELECT ID FROM career_level WHERE level_name = ?), seeker_id = ?`,
                 [interests.min_salary, interests.expYears, interests.educationLevel, interests.status, interests.careerLevel, seekerId],
                 (queryErr, results) => {
                     if (queryErr) {
-                        return connection.rollback(() => next(queryErr, null))
+                        return pool.rollback(() => next(queryErr, null))
                     }
                     let newTypes = interests.jobTypes.map((item) => `"${item}"`).toString();
-                    connection.query(
+                    pool.query(
                         `INSERT INTO seeker_types SELECT ?, ID FROM job_types WHERE type_name in (${newTypes})`,
                         [seekerId],
                         (err, results) => {
                             if (err) return next(err, null);
-                            connection.commit((commitErr) => {
+                            pool.commit((commitErr) => {
                                 if (commitErr) return next(commitErr, null);
                                 console.log("Committed Successfully");
                                 return next(null, results)
@@ -156,31 +156,31 @@ module.exports = {
     },
 
     addProfInfo: function(info, next) {
-        connection.beginTransaction((transErr) => {
+        pool.beginTransaction((transErr) => {
             if (transErr) return next(transErr, null);
 
             // Adding job-seeker roles
-            connection.query(
+            pool.query(
                 `SELECT role_name FROM roles`,
                 (err, results) => {
-                    if (err) return connection.rollback(() => next(err, null));
+                    if (err) return pool.rollback(() => next(err, null));
                     const resultsRoles = results.map((item) => { return item.role_name });
                     const roles = info.jobTitles.filter((item) => {
                         return !resultsRoles.some((role) => { return item === role })
                     }).map(item => [item]);
                     if (roles.length > 0) {
-                        connection.query(
+                        pool.query(
                             `INSERT INTO roles(role_name) VALUES ?`,
                             [roles],
                             (err, results) => {
-                                if (err) return connection.rollback(() => next(err, null));
-                                connection.query(
+                                if (err) return pool.rollback(() => next(err, null));
+                                pool.query(
                                     `INSERT INTO seeker_role SELECT ?, ID FROM roles WHERE role_name in (${info.jobTitles.map((item) => `"${item}"`).toString()})`,
                                     [seekerId],
                                     (err, results) => {
-                                        if (err) return connection.rollback(() => next(err, null));
-                                        connection.commit((err) => {
-                                            if (err) return connection.rollback(() => next(err, null));
+                                        if (err) return pool.rollback(() => next(err, null));
+                                        pool.commit((err) => {
+                                            if (err) return pool.rollback(() => next(err, null));
                                         });
                                     }
                                 )
@@ -188,13 +188,13 @@ module.exports = {
                         );
                     }
                     else {
-                        connection.query(
+                        pool.query(
                             `INSERT INTO seeker_role SELECT ?, ID FROM roles WHERE role_name in (${info.jobTitles.map((item) => `"${item}"`).toString()})`,
                             [seekerId],
                             (err, results) => {
-                                if (err) return connection.rollback(() => next(err, null));
-                                connection.commit((err) => {
-                                    if (err) return connection.rollback(() => next(err, null));
+                                if (err) return pool.rollback(() => next(err, null));
+                                pool.commit((err) => {
+                                    if (err) return pool.rollback(() => next(err, null));
                                 });
                             }
                         );
@@ -203,31 +203,31 @@ module.exports = {
             );
         });
 
-        connection.beginTransaction((transErr) => {
+        pool.beginTransaction((transErr) => {
             if (transErr) return next(transErr, null);
 
             // Adding job-seeker skills
-            connection.query(
+            pool.query(
                 `SELECT skill_name FROM skills`,
                 (err, results) => {
-                    if (err) return connection.rollback(() => next(err, null));
+                    if (err) return pool.rollback(() => next(err, null));
                     const resultsSkills = results.map((item) => { return item.skill_name });
                     const skills = info.skills.filter((item) => {
                         return !resultsSkills.some((skill) => { return item === skill })
                     }).map(item => [item]);
                     if (skills.length > 0) {
-                            connection.query(
+                            pool.query(
                                 `INSERT INTO skills(skill_name) VALUES ?`,
                                 [skills],
                                 (err, results) => {
-                                    if (err) return connection.rollback(() => next(err, null));
-                                    connection.query(
+                                    if (err) return pool.rollback(() => next(err, null));
+                                    pool.query(
                                         `INSERT INTO seeker_skills SELECT ?, ID FROM skills WHERE skill_name in (${info.skills.map((item) => `"${item}"`).toString()})`,
                                         [seekerId],
                                         (err, results) => {
-                                            if (err) return connection.rollback(() => next(err, null));
-                                            connection.commit((err) => {
-                                                if (err) return connection.rollback(() => next(err, null));
+                                            if (err) return pool.rollback(() => next(err, null));
+                                            pool.commit((err) => {
+                                                if (err) return pool.rollback(() => next(err, null));
                                             });
                                         }
                                     )
@@ -236,13 +236,13 @@ module.exports = {
 
                     }
                     else {
-                        connection.query(
+                        pool.query(
                             `INSERT INTO seeker_skills SELECT ?, ID FROM skills WHERE skill_name in (${info.skills.map((item) => `"${item}"`).toString()})`,
                             [seekerId],
                             (err, results) => {
-                                if (err) return connection.rollback(() => next(err, null));
-                                connection.commit((err) => {
-                                    if (err) return connection.rollback(() => next(err, null));
+                                if (err) return pool.rollback(() => next(err, null));
+                                pool.commit((err) => {
+                                    if (err) return pool.rollback(() => next(err, null));
                                 });
                             }
                         );
@@ -252,13 +252,13 @@ module.exports = {
         });
 
         // Adding job-seeker languages
-        connection.beginTransaction((transErr) => {
+        pool.beginTransaction((transErr) => {
             if (transErr) return next(transErr, null);
 
-            connection.query(
+            pool.query(
                 `SELECT * FROM languages`,
                 (err, langsResults) => {
-                    if (err) return connection.rollback(() => next(err, null));
+                    if (err) return pool.rollback(() => next(err, null));
                     const langs = langsResults.filter(item => {
                         return info.langs.some(lang => item.name === lang.name);
                     });
@@ -271,13 +271,13 @@ module.exports = {
                         return finalLang
                     });
 
-                    connection.query(
+                    pool.query(
                         `INSERT INTO seeker_langs VALUES ?`,
                         [langsRows],
                         (err, results) => {
-                            if (err) return connection.rollback(() => next(err, null));
-                            connection.commit(() => {
-                                if (err) return connection.rollback(() => next(err, null));
+                            if (err) return pool.rollback(() => next(err, null));
+                            pool.commit(() => {
+                                if (err) return pool.rollback(() => next(err, null));
                             })
                         }
                     )
@@ -287,7 +287,7 @@ module.exports = {
         });
 
         // Adding job-seeker qualification
-        connection.query(
+        pool.query(
             `INSERT INTO job_qualification SET degree_level = ?, institution = ?, field_of_study = ?, start_date = ?, end_date = ?, graduation_grade = ?, seeker_id = ?`,
             [...Object.values(info.qualification), seekerId],
             (err, results) => {
@@ -300,7 +300,7 @@ module.exports = {
 
     getSeeker: function(userId, next) {
 
-        connection.query(`
+        pool.query(`
         SELECT js.first_name, js.last_name, js.email, js.location, js.image_url, js.military_status, js.marital_status, js.gender, js.birth_date, sp.phone_num, r.role_name
         FROM job_seeker js
         JOIN seeker_role sr
@@ -319,7 +319,7 @@ module.exports = {
         })
     },
     getSkills: function(userId, next) {
-        connection.query(`
+        pool.query(`
         SELECT s.skill_name
         FROM job_seeker js
         JOIN seeker_skills ss
@@ -340,7 +340,7 @@ module.exports = {
     },
 
     getLangs: function(userId, next) {
-        connection.query(`
+        pool.query(`
         SELECT l.name, sl.level
         FROM job_seeker js
         JOIN seeker_langs sl
@@ -357,7 +357,7 @@ module.exports = {
     },
 
     addExp: function(userId, exp, next) {
-        connection.query(`
+        pool.query(`
             INSERT INTO work_experience SET ?
         `,
         { salary: exp.salary, company_name: exp.companyName, job_title: exp.title, job_type: exp.jobType, start_date: exp.startDate, end_date: exp.end_date, seeker_id: userId },
@@ -369,7 +369,7 @@ module.exports = {
     },
 
     getExp: function(userId, next) {
-        connection.query(` SELECT ID, salary, company_name, job_type, job_title, start_date, end_date
+        pool.query(` SELECT ID, salary, company_name, job_type, job_title, start_date, end_date
         FROM work_experience WHERE seeker_id = ? `,
         [userId],
         (err, results) => {
@@ -380,7 +380,7 @@ module.exports = {
     },
 
     removeExp: function(id, next) {
-        connection.query(` DELETE FROM work_experience WHERE ID = ? `,
+        pool.query(` DELETE FROM work_experience WHERE ID = ? `,
         [id],
         (err, results) => {
             if (err) return next(err, null);
@@ -389,7 +389,7 @@ module.exports = {
         })
     },
     addEdu: function(userId, edu, next) {
-        connection.query(`
+        pool.query(`
             INSERT INTO job_qualification SET ?
         `,
         {degree_level: edu.degreeLevel, institution: edu.institution, field_of_study: edu.fieldOfStudy, start_date: edu.startDate, end_date: edu.endDate, graduation_grade: edu.grade, seeker_id: userId},
@@ -401,7 +401,7 @@ module.exports = {
     },
 
     getEdu: function(userId, next) {
-        connection.query(` SELECT degree_level, institution, field_of_study, graduation_grade, start_date, end_date
+        pool.query(` SELECT degree_level, institution, field_of_study, graduation_grade, start_date, end_date
         FROM job_qualification WHERE seeker_id = ? `,
         [userId],
         (err, results) => {
