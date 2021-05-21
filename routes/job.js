@@ -11,7 +11,7 @@ router.post("/post", auth, (req, res, next) => {
     const expireDate = new Date(req.body.expireDate);
     req.body.expireDate = `${expireDate.getFullYear()}-${expireDate.getMonth()}-${expireDate.getDate()}`;
     
-    Job.postJob(req.headers["x-auth-token"], req.body, (err, results) => {
+    Job.postJob(req.header("x-auth-token"), req.body, (err, results) => {
         
         if (err) return next(err);
         else if (err === "Unauthorized") return res.status(401).send("You dont have permission to post a job!");
