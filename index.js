@@ -17,6 +17,7 @@ if (!config.get("jwtPrivateKey")) {
 
 process.on("uncaughtException", (err) => {
     console.log("Caught Exception: ", err);
+    process.exit(1);
 });
 
 // process.on("unhandledRejection", errReason => {
