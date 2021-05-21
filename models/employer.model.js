@@ -6,8 +6,6 @@ let jobId = null;
 
 module.exports = {
     postJob: function (token, job, next) {
-        pool.beginTransaction((err) => {
-            if (err) return next(err, null);
 
             try {
                 const payload = jwt.verify(token, config.get("jwtPrivateKey"));
@@ -21,7 +19,7 @@ module.exports = {
                     `,
                     job.type,
                     (err, typeId) => {
-                        if (err) return pool.rollback(() => next(err, null));
+                        if (err) return next(err, null);
 
                         const jobRecord = {
                             experience_needed: job.experience,
@@ -47,7 +45,7 @@ module.exports = {
                         pool.query(
                             `SELECT skill_name FROM skills`,
                             (err, results) => {
-                                if (err) return pool.rollback(() => next(err, null));
+                                if (err) return next(err, null);
                                 const resultsSkills = results.map((item) => {
                                     return item.skill_name
                                 });
@@ -61,15 +59,12 @@ module.exports = {
                                         `INSERT INTO skills(skill_name) VALUES ?`,
                                         [skills],
                                         (err, results) => {
-                                            if (err) return pool.rollback(() => next(err, null));
+                                            if (err) return next(err, null);
                                             pool.query(
                                                 `INSERT INTO job_skills SELECT ?, ID FROM skills WHERE skill_name in (${job.skills.map((item) => `"${item}"`).toString()})`,
                                                 [jobId],
                                                 (err, results) => {
-                                                    if (err) return pool.rollback(() => next(err, null));
-                                                    pool.commit((err) => {
-                                                        if (err) return pool.rollback(() => next(err, null));
-                                                    });
+                                                    if (err) return next(err, null);
                                                 }
                                             )
                                         }
@@ -80,12 +75,9 @@ module.exports = {
                                         `INSERT INTO job_skills SELECT ?, ID FROM skills WHERE skill_name in (${job.skills.map((item) => `"${item}"`).toString()})`,
                                         [jobId],
                                         (err, results) => {
-                                            if (err) return pool.rollback(() => next(err, null));
-                                            pool.commit((err) => {
-                                                if (err) return pool.rollback(() => next(err, null));
+                                            if (err) return next(err, null);
 
-                                                return next(null, "Job has been posted successfully")
-                                            });
+                                            return next(null, "Job has been posted successfully")
                                         }
                                     );
                                 }
@@ -97,7 +89,6 @@ module.exports = {
             } catch (err) {
                 return next("Invalid token. Please verify your credentials")
             }
-        })
     },
 
     getEmployees: function(userId, next) {
@@ -129,9 +120,6 @@ module.exports = {
     },
 
     getJobs: function(title, userId, next) {
-        pool.beginTransaction(err => {
-            if (err) return next(err, null);
-
             pool.query(`
             SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
             FROM job j
@@ -142,22 +130,12 @@ module.exports = {
 			JOIN job_types jt
 				ON jt.ID = j.type_id
             `, (err, jobs) => {
-                if (err) return pool.rollback(() => next(err, null));
-
-                    pool.commit(err => {
-                        if (err) return pool.rollback(() => next(err, null));
-
-                        return next(null, jobs)
-                    })
+                if (err) return next(err, null);
+                return next(null, jobs)
             })
-
-        })
     },
 
     getSkills: function(jobId, next) {
-        pool.beginTransaction(err => {
-            if (err) return next(err, null);
-
             pool.query(`
             SELECT s.skill_name
             FROM skills s
@@ -169,17 +147,9 @@ module.exports = {
             `,
             [jobId], 
             (err, skills) => {
-                if (err) return pool.rollback(() => next(err, null));
-                    if (err) return pool.rollback(() => next(err, null));
-
-                    pool.commit(err => {
-                        if (err) return pool.rollback(() => next(err, null));
-                        const newSkills = skills.map(item => item["skill_name"])
-
-                        return next(null, newSkills)
-                    })
+                    if (err) return next(err, null);
+                    const newSkills = skills.map(item => item["skill_name"]);
+                    return next(null, newSkills)
             })
-
-        })
     },
 }

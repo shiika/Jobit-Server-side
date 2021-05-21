@@ -67,9 +67,6 @@ module.exports = {
     },
 
     updateInterests: function(interests, userId, next) {
-        pool.beginTransaction((transErr) => {
-            if (transErr) return next(transErr, null);
-
             pool.query(
                 `UPDATE career_interests SET min_salary = ?, expYears = ?, educationLevel = ?, status = ?,
                     level_id = (SELECT ID FROM career_level WHERE level_name = ?), seeker_id = ?
@@ -77,23 +74,16 @@ module.exports = {
                 [interests.min_salary, interests.expYears, interests.educationLevel, interests.status, interests.careerLevel, userId, userId],
                 (queryErr, results) => {
                     if (queryErr) {
-                        return pool.rollback(() => next(queryErr, null))
+                        return next(queryErr, null)
                     }
 
-                    pool.commit((commitErr) => {
-                        if (commitErr) return next(commitErr, null);
-                        console.log("Committed Successfully");
-                        return next(null, results)
-                    })
+                    console.log("Committed Successfully");
+                    return next(null, results)
                 }
             );
-        });
 
     },
     getInterests: function(userId, next) {
-        pool.beginTransaction((transErr) => {
-            if (transErr) return next(transErr, null);
-
             pool.query(
                 `SELECT ci.min_salary, cl.level_name, ci.expYears, ci.educationLevel, ci.status
                 FROM career_interests ci
@@ -103,7 +93,7 @@ module.exports = {
                 [userId],
                 (queryErr, interests) => {
                     if (queryErr) {
-                        return pool.rollback(() => next(queryErr, null))
+                        return next(queryErr, null)
                     }
                     pool.query(`
                     SELECT type_name FROM job_types
@@ -112,30 +102,22 @@ module.exports = {
                         AND seeker_types.seeker_id = ?
                     `, [userId], (err, jobTypes) => {
                         if (err) return next(err, null);
-                        
-                        pool.commit((commitErr) => {
-                            if (commitErr) return next(commitErr, null);
-                            console.log("Committed Successfully");
-                            return next(null, {types: Object.values(jobTypes.map(item => item.type_name)), interests: interests[0]})
-                        })
+                        console.log("Committed Successfully");
+                        return next(null, {types: Object.values(jobTypes.map(item => item.type_name)), interests: interests[0]})
                     })
                 }
             );
-        });
 
     },
 
     addInterests: function(interests, next) {
-        pool.beginTransaction((transErr) => {
-            if (transErr) return next(transErr, null);
-
             pool.query(
                 `INSERT INTO career_interests SET min_salary = ?, expYears = ?, educationLevel = ?, status = ?,
                     level_id = (SELECT ID FROM career_level WHERE level_name = ?), seeker_id = ?`,
                 [interests.min_salary, interests.expYears, interests.educationLevel, interests.status, interests.careerLevel, seekerId],
                 (queryErr, results) => {
                     if (queryErr) {
-                        return pool.rollback(() => next(queryErr, null))
+                        return next(queryErr, null)
                     }
                     let newTypes = interests.jobTypes.map((item) => `"${item}"`).toString();
                     pool.query(
@@ -143,27 +125,20 @@ module.exports = {
                         [seekerId],
                         (err, results) => {
                             if (err) return next(err, null);
-                            pool.commit((commitErr) => {
-                                if (commitErr) return next(commitErr, null);
-                                console.log("Committed Successfully");
-                                return next(null, results)
-                            })
+                            console.log("Committed Successfully");
+                            return next(null, results)
                         })
                 }
             );
-        });
 
     },
 
     addProfInfo: function(info, next) {
-        pool.beginTransaction((transErr) => {
-            if (transErr) return next(transErr, null);
-
             // Adding job-seeker roles
             pool.query(
                 `SELECT role_name FROM roles`,
                 (err, results) => {
-                    if (err) return pool.rollback(() => next(err, null));
+                    if (err) return next(err, null);
                     const resultsRoles = results.map((item) => { return item.role_name });
                     const roles = info.jobTitles.filter((item) => {
                         return !resultsRoles.some((role) => { return item === role })
@@ -173,15 +148,12 @@ module.exports = {
                             `INSERT INTO roles(role_name) VALUES ?`,
                             [roles],
                             (err, results) => {
-                                if (err) return pool.rollback(() => next(err, null));
+                                if (err) return next(err, null);
                                 pool.query(
                                     `INSERT INTO seeker_role SELECT ?, ID FROM roles WHERE role_name in (${info.jobTitles.map((item) => `"${item}"`).toString()})`,
                                     [seekerId],
                                     (err, results) => {
-                                        if (err) return pool.rollback(() => next(err, null));
-                                        pool.commit((err) => {
-                                            if (err) return pool.rollback(() => next(err, null));
-                                        });
+                                        if (err) return next(err, null);
                                     }
                                 )
                             }
@@ -192,25 +164,17 @@ module.exports = {
                             `INSERT INTO seeker_role SELECT ?, ID FROM roles WHERE role_name in (${info.jobTitles.map((item) => `"${item}"`).toString()})`,
                             [seekerId],
                             (err, results) => {
-                                if (err) return pool.rollback(() => next(err, null));
-                                pool.commit((err) => {
-                                    if (err) return pool.rollback(() => next(err, null));
-                                });
+                                if (err) return next(err, null);
                             }
                         );
                     }
                 }
             );
-        });
-
-        pool.beginTransaction((transErr) => {
-            if (transErr) return next(transErr, null);
-
             // Adding job-seeker skills
             pool.query(
                 `SELECT skill_name FROM skills`,
                 (err, results) => {
-                    if (err) return pool.rollback(() => next(err, null));
+                    if (err) return next(err, null);
                     const resultsSkills = results.map((item) => { return item.skill_name });
                     const skills = info.skills.filter((item) => {
                         return !resultsSkills.some((skill) => { return item === skill })
@@ -220,15 +184,12 @@ module.exports = {
                                 `INSERT INTO skills(skill_name) VALUES ?`,
                                 [skills],
                                 (err, results) => {
-                                    if (err) return pool.rollback(() => next(err, null));
+                                    if (err) return next(err, null);
                                     pool.query(
                                         `INSERT INTO seeker_skills SELECT ?, ID FROM skills WHERE skill_name in (${info.skills.map((item) => `"${item}"`).toString()})`,
                                         [seekerId],
                                         (err, results) => {
-                                            if (err) return pool.rollback(() => next(err, null));
-                                            pool.commit((err) => {
-                                                if (err) return pool.rollback(() => next(err, null));
-                                            });
+                                            if (err) return next(err, null);
                                         }
                                     )
                                 }
@@ -240,25 +201,18 @@ module.exports = {
                             `INSERT INTO seeker_skills SELECT ?, ID FROM skills WHERE skill_name in (${info.skills.map((item) => `"${item}"`).toString()})`,
                             [seekerId],
                             (err, results) => {
-                                if (err) return pool.rollback(() => next(err, null));
-                                pool.commit((err) => {
-                                    if (err) return pool.rollback(() => next(err, null));
-                                });
+                                if (err) return next(err, null);
                             }
                         );
                     }
                 }
             );
-        });
 
         // Adding job-seeker languages
-        pool.beginTransaction((transErr) => {
-            if (transErr) return next(transErr, null);
-
             pool.query(
                 `SELECT * FROM languages`,
                 (err, langsResults) => {
-                    if (err) return pool.rollback(() => next(err, null));
+                    if (err) return next(err, null);
                     const langs = langsResults.filter(item => {
                         return info.langs.some(lang => item.name === lang.name);
                     });
@@ -275,16 +229,11 @@ module.exports = {
                         `INSERT INTO seeker_langs VALUES ?`,
                         [langsRows],
                         (err, results) => {
-                            if (err) return pool.rollback(() => next(err, null));
-                            pool.commit(() => {
-                                if (err) return pool.rollback(() => next(err, null));
-                            })
+                            if (err) return next(err, null);
                         }
                     )
                 }
             )
-
-        });
 
         // Adding job-seeker qualification
         pool.query(

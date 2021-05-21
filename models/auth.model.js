@@ -5,9 +5,6 @@ const config = require("config");
 
 module.exports = {
     createEmployer: function(empInfo, next) {
-        pool.beginTransaction((err) => {
-            if (err) return next(err, null);
-
             pool.query(
                 `SELECT * FROM company`,
                 (err, results) => {
@@ -35,11 +32,7 @@ module.exports = {
                                     (err, results) => {
                                         if (err) return next(err, null);
 
-                                        pool.commit((err) => {
-                                            if (err) return next(err, null);
-
                                             return next(null, results)
-                                        })
                                     }
                                 )
                             }
@@ -56,13 +49,9 @@ module.exports = {
                             `INSERT INTO employer SET ?`,
                             empRecord,
                             (err, results) => {
-                                if (err) return next(err, null);
-    
-                                pool.commit((err) => {
                                     if (err) return next(err, null);
     
                                     return next(null, results)
-                                })
                             }
                         )
                     }
@@ -70,7 +59,6 @@ module.exports = {
                     
                 }
             )
-        })
     },
 
     authUser: function(credentials, userType, next) {
