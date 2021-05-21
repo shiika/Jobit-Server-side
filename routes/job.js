@@ -9,7 +9,7 @@ router.post("/post", auth, (req, res, next) => {
     req.body.publishDate = `${publishDate.getFullYear()}-${publishDate.getMonth()}-${publishDate.getDate()}`;
     
     const expireDate = new Date(req.body.expireDate);
-    req.body.expireDate = `${expireDate.getFullYear()}-${expireDate.getMonth()}-${expireDate.getDate()}`;
+    req.body.expireDate = `${expireDate.getFullYear()}-${expireDate.getMonth() + 1}-${expireDate.getDate()}`;
     
     Job.postJob(req.header("x-auth-token"), req.body, (err, results) => {
         

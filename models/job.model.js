@@ -21,6 +21,7 @@ module.exports = {
                     job.type,
                     (err, typeId) => {
                         if (err) return connection.rollback(() => next(err, null));
+                        console.log(typeId);
 
                         const jobRecord = {
                             experience_needed: job.experience,
