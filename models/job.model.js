@@ -64,6 +64,8 @@ module.exports = {
                                             [jobId],
                                             (err, results) => {
                                                 if (err) return next(err, null);
+
+                                                return next(null, "Job has been posted successfully")
                                             }
                                         )
                                     }

@@ -13,6 +13,14 @@ router.get("/exp", auth, (req, res, next) => {
     });
 });
 
+router.get("/apps", auth, (req, res, next) => {
+    const userId = req.user.ID;
+    JobSeeker.getApplications(userId, (err, results) => {
+        if (err) return next(err.sqlMessage);
+        res.send(results);
+    });
+});
+
 router.put("/update", auth, (req, res, next) => {
     const userId = req.user.ID;
     JobSeeker.updateSeeker(req.body, userId, req.body.phone, (err, results) => {

@@ -350,5 +350,47 @@ module.exports = {
 
             return next(null, results);
         })
+    },
+    
+    getApplications: function(userId, next) {
+        pool.query(`
+        SELECT j.title, j.publish_date, aps.state_date, s.application_status, j.ID
+        FROM applying_status aps
+        JOIN seeker_status s
+            ON s.ID = aps.status_id
+        JOIN job j 
+            ON j.ID = aps.job_id
+        JOIN job_seeker js
+            ON js.ID = aps.seeker_id
+            AND js.ID = ?      
+        GROUP BY j.ID   
+        `,
+        [userId],
+        (err, apps) => {
+            if (err) return next(err, null);
+
+            pool.query(`
+            SELECT c.name, c.logo
+            FROM company c
+            JOIN employer e
+                ON e.company_id = c.ID
+            JOIN job j
+                ON j.employer_id = e.ID
+            JOIN applying_status aps
+                ON aps.job_id = j.ID
+                AND aps.seeker_id = ?
+            GROUP BY j.ID  
+            `,
+            [userId],
+            (err, companies) => {
+                if (err) return next(err, null);
+
+                const applications = apps.map((app, index) => {
+                    return {app, companyName: companies[index].name, logo: companies[index].logo} 
+                });
+
+                return next(null, applications)
+            })
+        })
     }
 };
