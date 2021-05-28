@@ -363,7 +363,7 @@ module.exports = {
         JOIN job_seeker js
             ON js.ID = aps.seeker_id
             AND js.ID = ?      
-        GROUP BY j.ID   
+        ORDER BY j.ID   
         `,
         [userId],
         (err, apps) => {
