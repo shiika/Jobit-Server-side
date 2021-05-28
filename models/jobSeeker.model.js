@@ -379,7 +379,7 @@ module.exports = {
             JOIN applying_status aps
                 ON aps.job_id = j.ID
                 AND aps.seeker_id = ?
-            GROUP BY j.ID  
+            ORDER BY j.ID  
             `,
             [userId],
             (err, companies) => {
