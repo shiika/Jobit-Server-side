@@ -29,6 +29,32 @@ router.get("/apply", auth, (req, res, next) => {
     })
 });
 
+router.get("/save", auth, (req, res, next) => {
+    const userId = req.user.ID;
+    const jobId= req.header("job-id");
+    Job.saveJob(+jobId, userId, (err, results) => {
+        if (err) return next(err);
+        res.send("Job has been saved successfully");
+    })
+});
+
+router.get("/saved", auth, (req, res, next) => {
+    const userId = req.user.ID;
+    Job.getSaved(userId, (err, results) => {
+        if (err) return next(err);
+        res.send(results);
+    })
+});
+
+router.delete("/unsave", auth, (req, res, next) => {
+    const userId = req.user.ID;
+    const jobId= req.header("job-id");
+    Job.removeJob(+jobId, userId, (err, results) => {
+        if (err) return next(err);
+        res.send("Job has been unsaved successfully");
+    })
+});
+
 router.get("/jobs", auth, (req, res, next) => {
     const empId = req.user.ID;
     Job.getEmployerJob(empId, (err, results) => {

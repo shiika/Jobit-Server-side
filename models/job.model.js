@@ -102,6 +102,51 @@ module.exports = {
                 return next(null, results);
             })
     },
+    saveJob: function(jobId, seekerId, next) {
+        pool.query(`
+            INSERT INTO saved_jobs SET job_id = ?, seeker_id = ?
+        `,
+        [jobId, seekerId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
+
+    removeJob: function(jobId, seekerId, next) {
+        pool.query(`
+            DELETE FROM saved_jobs WHERE job_id = ? AND seeker_id = ?
+        `,
+        [jobId, seekerId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
+
+    getSaved: function(seekerId, next) {
+        pool.query(`
+        SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
+        FROM job j
+        JOIN employer e
+            ON e.ID = j.employer_id
+        JOIN company c
+            ON c.ID = e.company_id
+        JOIN job_types jt
+            ON jt.ID = j.type_id
+        JOIN saved_jobs sj
+            ON sj.job_id = j.ID
+            AND sj.seeker_id = ?
+        `,
+        [seekerId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
     getEmployerJob: function (empId, next) {
         pool.query(`
         SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
