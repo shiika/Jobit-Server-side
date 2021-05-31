@@ -351,6 +351,18 @@ module.exports = {
             return next(null, results);
         })
     },
+
+    removeApp: function(jobId, seekerId, next) {
+        pool.query(`
+            DELETE FROM applying_status WHERE job_id = ? AND seeker_id = ?
+        `,
+        [jobId, seekerId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
     
     getApplications: function(userId, next) {
         pool.query(`

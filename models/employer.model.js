@@ -119,6 +119,34 @@ module.exports = {
         })
     },
 
+    removeJob: function(jobId, next) {
+        pool.query(`
+            DELETE FROM job_skills WHERE job_id = ?
+        `,
+        jobId,
+        (err, results) => {
+            if(err) return next(err, null);
+
+            pool.query(`
+                DELETE FROM saved_jobs WHERE job_id = ?
+            `,
+            jobId,
+            (err, results) => {
+                if (err) return next(err, null);
+
+                pool.query(`
+                    DELETE FROM job WHERE ID = ?
+                `,
+                jobId,
+                (err,results) => {
+                    if (err) return next(err, null);
+
+                    return next(null, results)
+                })
+            })
+        })
+    },
+
     getJobs: function(title, userId, next) {
             pool.query(`
             SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name

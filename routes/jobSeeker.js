@@ -134,6 +134,17 @@ router.post("/add-edu", auth, (req, res, next) => {
         res.status(200).send("Education addedd successfully");
     })
 
+});
+
+router.delete("/remove-app", auth, (req, res, next) => {
+    const seekerId = req.user.ID;
+    const jobId = req.header("job-id");
+
+    JobSeeker.removeApp(jobId, seekerId, (err, results) => {
+        if (err) return next(err);
+
+        res.send(results);
+    })
 })
 
 module.exports = router;

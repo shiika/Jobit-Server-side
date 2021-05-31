@@ -20,6 +20,15 @@ router.post("/post", (req, res, next) => {
     })
 });
 
+router.delete("/remove-job", auth, (req, res, next) => {
+    const jobId = req.header("job-id");
+    Employer.removeJob(jobId, (err, results) => {
+        if (err) return next(err);
+        res.send("Job has been removed successfully");
+    })
+    
+});
+
 router.get("/employees", auth, (req, res, next) => {
     const userId = req.user.ID;
     Employer.getEmployees(userId, (err, employees) => {
