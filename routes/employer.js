@@ -37,6 +37,32 @@ router.get("/employees", auth, (req, res, next) => {
     })
 });
 
+router.get("/saved", auth, (req, res, next) => {
+    const empId = req.user.ID;
+    Employer.getSavedSeekers(empId, (err, employees) => {
+        if (err) return next(err);
+        res.status(200).send(employees)
+    })
+});
+
+router.get("/save", auth, (req, res, next) => {
+    const empId = req.user.ID;
+    const seekerId = req.header("seeker-id");
+    Employer.saveSeeker(seekerId, empId, (err, employees) => {
+        if (err) return next(err);
+        res.status(200).send("Seeker has been saved successfully")
+    })
+});
+
+router.delete("/remove", auth, (req, res, next) => {
+    const empId = req.user.ID;
+    const seekerId = req.header("seeker-id");
+    Employer.removeSeeker(seekerId, empId, (err, employees) => {
+        if (err) return next(err);
+        res.status(200).send(employees)
+    })
+});
+
 router.get("/jobs", auth, (req, res, next) => {
     const userId = req.user.ID;
     Employer.getJobs("factor", userId, (err, jobs) => {

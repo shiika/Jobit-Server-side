@@ -147,6 +147,63 @@ module.exports = {
         })
     },
 
+    saveSeeker: function(seekerId, empId, next) {
+        pool.query(`
+            INSERT INTO saved_seekers SET seeker_id = ?, emp_id = ?
+        `,
+        [seekerId, empId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
+
+    removeSeeker: function(seekerId, empId, next) {
+        pool.query(`
+            DELETE FROM saved_seekers WHERE seeker_id = ? AND emp_id = ?
+        `,
+        [seekerId, empId],
+        (err, results) => {
+            if (err) return next(err, null);
+
+            return next(null, results)
+        })
+    },
+
+    getSavedSeekers: function(empId, next) {
+        pool.query(`
+        SELECT js.ID, js.first_name, js.last_name, js.image_url, r.role_name, ci.min_salary
+        FROM job_seeker js
+        JOIN saved_seekers ss
+			ON ss.emp_id = ?
+            AND ss.seeker_id = js.ID
+        JOIN seeker_role sr
+            ON sr.seeker_id = js.ID
+            AND sr.seeker_id = ss.seeker_id
+        JOIN roles r
+            ON r.ID = sr.role_id
+            AND sr.seeker_id = ss.seeker_id
+        JOIN career_interests ci
+            ON ci.seeker_id = ss.seeker_id
+        `,
+        [empId],
+        (err, info) => {
+            if (err) return next(err, null);
+            let newInfo = info.filter((seeker, si) => {
+                if (seeker.ID === info[info.length - 1].ID && si == 0) {
+                    return seeker
+                }
+                if (si === info.length - 1) {
+                    return seeker.ID !== info[0].ID
+                } 
+                return seeker.ID !== info[si + 1].ID;
+            });
+            
+            return next(null, newInfo)
+        })
+    },
+
     getJobs: function(title, userId, next) {
             pool.query(`
             SELECT j.ID, j.experience_needed, j.salary, j.description, j.vacancies, j.publish_date, j.title, c.name as companyName, c.logo, jt.type_name
