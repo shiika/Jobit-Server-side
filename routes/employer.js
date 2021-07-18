@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 const Employer = require("../models/employer.model");
 const auth = require("../middleware/auth");
-const validateInterests = require("../models/validators/interests");
 
 router.post("/post", (req, res, next) => {
     

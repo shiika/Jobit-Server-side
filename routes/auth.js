@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const validateUser = require("../models/validators/user");
+const Mock = require("../mock/employers");
 const validateEmployer = require("../models/validators/employer");
 const signup = require('../middleware/signup');
 const JobSeeker = require("../models/jobSeeker.model");
@@ -29,6 +30,18 @@ router.post("/emp-register", signup, (req, res, next) => {
         if (err) return next(err);
         res.send("Successfully signed up");
     });
+});
+
+router.post("/mock-emp", (req, res, next) => {
+    // const { error } = validateEmployer(req.body);
+    // if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);
+
+    req.body.forEach((item, index) => {
+        Mock.mockPost(item, (err, results) => {
+            if (err) return next(err);
+            if (index == req.body.length - 1) res.send("Mock employers added");
+        });
+    })
 });
 
 router.post("/login", (req, res, next) => {
