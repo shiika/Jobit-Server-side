@@ -3,7 +3,7 @@
     "db": {
         "host": "DB_HOSTNAME",
         "password": "DB_PASSWORD",
-        "port": "DB_PORT",
+        "port": "20973",
         "user": "DB_USERNAME",
         "database": "DB_DATABASE"
     }
