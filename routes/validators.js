@@ -5,6 +5,8 @@ const JobSeeker = require("../models/jobSeeker.model");
 router.post("/checkEmail", (req, res, next) => {
     const email = req.body.email;
     JobSeeker.checkEmail(email, (err, result) => {
+        console.log("from validators");
+        console.log(err);
         if (err) return next(err.sqlMessage);
         res.send(result[0]);
     });
