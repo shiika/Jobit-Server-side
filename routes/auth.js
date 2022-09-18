@@ -7,6 +7,13 @@ const signup = require('../middleware/signup');
 const JobSeeker = require("../models/jobSeeker.model");
 const Auth = require("../models/auth.model");
 
+router.get("/company-locations", (req, res, next) => {
+    Auth.getLocations((err, results) => {
+        if (err) return next(err);
+        res.send(results);
+    })
+})
+
 router.post("/register", signup, (req, res, next) => {
     const { error } = validateUser(req.body);
     if (error) return res.status(400).send(`Bad request.Validate user: ${error}`);
