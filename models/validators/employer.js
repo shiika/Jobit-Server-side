@@ -12,7 +12,7 @@ module.exports = function(user) {
         companyForm: Joi.object({
             name: Joi.string().required(),
             website: Joi.string().required(),
-            locations: Joi.array().items(Joi.string()).min(1),
+            locations: Joi.array().items(Joi.number()).min(1),
             logo: Joi.string(),
         })
     });
